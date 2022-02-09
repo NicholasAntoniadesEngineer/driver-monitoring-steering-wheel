@@ -1,10 +1,12 @@
 # Kymira-Fuell_Black-Box
 This folder contains all the code and schematics required to assemble and run the prototype Black-Box and it's individual elements. 
 
+
 **Known Bugs**
 - Running the Accelerometer module on start up works fine, but after running NFC module the accelerometer code no longer produces data, 
     -> this seems to be something to do with a clash in the SPI channels, or changes in the configurations of the channels between the two different code sets.
 - Dual camera module not running yet.
+
 
 **Accelerometer**
  - Running ./BMI160_Accl.py script will print the raw accelerometer values to the command line.
@@ -20,6 +22,7 @@ This folder contains all the code and schematics required to assemble and run th
 
 **NFC**
  - Running ./ example_get_uid.py will print to the terminal the ID of any NFC tag nearby.
+ 
  
 **Fresh Installation**
 1. Flash new RaspberryPi image
