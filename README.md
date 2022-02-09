@@ -15,7 +15,7 @@ This folder contains all the code and schematics required to assemble and run th
  - Running ./audio.py will play the applause-1.wav audio file.
  - The audio volume can ve varied on the physical audio driver by rotating the small pot next to the A+ pin.
 
-**GPS*
+**GPS**
  - Opening GPS/examples and running ./latlon.py will run the GPS module printing the current GPS latitude and longitude.
 
 **NFC**
