@@ -46,6 +46,7 @@ This folder contains all the code and schematics required to assemble and run th
     - set the ip address of the Pi
     - sudo apt install git
     - sudo apt clone https://github.com/nicholasantoniades/Kymira-Fuell_Black-Box.git
+        -> Personal Access Token: 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
     
 3. Install I2C and SPI dependencies
     - Enable I2C,SPI:
