@@ -1,5 +1,5 @@
-# Kymira-Fuell_Black-Box
-This folder contains all the code and schematics required to assemble and run the prototype Black-Box and it's individual elements. 
+# ECG Steering wheel
+This folder contains all the code and schematics required to assemble and run the prototype Steering wheel and it's individual elements. 
 
 
 **Known Bugs**
@@ -40,13 +40,12 @@ This folder contains all the code and schematics required to assemble and run th
     - Connect to the wifi network, tutorial found in the following link.
        (https://desertbot.io/blog/headless-raspberry-pi-4-ssh-wifi-setup)
     
-2. Download Kymira-Fuell_Black-Box repository from git.
+2. Download the repository from git.
     - sudo apt update
     - sudo apt upgrade
     - set the ip address of the Pi
     - sudo apt install git
-    - sudo apt clone https://github.com/nicholasantoniades/Kymira-Fuell_Black-Box.git
-    - -> Personal Access Token: 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
+    - sudo apt clone https://github.com/NicholasAntoniadesEngineer/ECG-Steering-Wheel.git
     
 3. Install I2C and SPI dependencies
     - Enable I2C,SPI:
