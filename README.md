@@ -1,28 +1,6 @@
 # ECG Steering wheel
 This folder contains all the code and schematics required to assemble and run the prototype Steering wheel and it's individual elements. 
 
-
-**Known Bugs**
-- Running the Accelerometer module on start up works fine, but after running NFC module the accelerometer code no longer produces data, 
-    -> this seems to be something to do with a clash in the SPI channels, or changes in the configurations of the channels between the two different code sets.
-- Dual camera module not running yet.
-
-
-**Accelerometer**
- - Running ./BMI160_Accl.py script will print the raw accelerometer values to the command line.
- - By changing the function called in the while loop Gyroscope and Accelerometer values can be read.
- - Data sheet found at : https://www.digikey.com/en/datasheets/bosch-sensortec/bosch-sensortec-bst-bmi160-ds000-07 
-
-**Audio**
- - Running ./audio.py will play the applause-1.wav audio file.
- - The audio volume can ve varied on the physical audio driver by rotating the small pot next to the A+ pin.
-
-**GPS**
- - Opening GPS/examples and running ./latlon.py will run the GPS module printing the current GPS latitude and longitude.
-
-**NFC**
- - Running ./ example_get_uid.py will print to the terminal the ID of any NFC tag nearby.
- 
  
 **Fresh Installation**
 1. Flash new RaspberryPi image
