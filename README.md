@@ -1,3 +1,7 @@
+this must be updated with info from the notion page
+
+
+
 # ECG Steering wheel
 This folder contains all the code and schematics required to assemble and run the prototype Steering wheel and it's individual elements. 
 
