@@ -1,310 +1,98 @@
-
 #!/usr/bin/env python3
+"""
+ECG and Grip Force Monitoring Script
+
+This script interfaces with the ADS1293 and ADS1241 devices to read ECG and ADC data.
+It uses the Raspberry Pi's SPI interface for communication.
+
+Author: Your Name
+Date: YYYY-MM-DD
+"""
+
 import spidev
 import RPi.GPIO as GPIO
 import time
-import datetime
-import csv
+from ads1293 import ADS1293
+from ads1241 import ADS1241
 
-#Imports for filtering
-from scipy.signal import butter, lfilter
-import numpy as np
-from scipy.signal import freqz
+# GPIO Pin Constants
+CS1_PIN = 24
+CS2_PIN = 23
 
-   
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Reads a single byte to a single address on the SPI device
-@return value of requested register
-@param[in] device       SPI device to be written to
-@param[in] reg_address  address of register on target device
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''     
-def reg_read(device, reg_address): 
-    # Set CS bit low for transmission
-    GPIO.output(device,0) 
-    # Adding Read bit to the register address
-    Read_command = reg_address|0x80     
-    # SPI read data from register 
-    spi.xfer([Read_command])   
-    # Write zeros to keep the clk ticking for the slave response
-    data = spi.xfer([0x0])  
-    # Set CS bit high for end of transmission
-    GPIO.output(device,1) 
-    return data
-    
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Writes a single byte to a single address on the SPI device
-@param[in] device       SPI device to be written to
-@param[in] data         address of register on the target device
-@param[in] reg_address  value to be written to target register
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''    
-def reg_write(device, reg_address, data):
-    # Set CS bit low for transmission
-    GPIO.output(device,0) 
-    # SPI write data to register
-    spi.xfer([reg_address,data])
-    # Set CS bit high for end of transmission
-    GPIO.output(device,1) 
+# SPI Constants
+SPI_BUS = 0
+SPI_DEVICE = 0
+SPI_MAX_SPEED_HZ = 32000
 
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Tests connection to ADS1293 by requesting known register
-@return value of requested register
-@param[in] reg_address  address of register on target device
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''     
-def ADS1293_testConnection(device):  
-    # Stop data conversion
-    reg_write(device,0x0,0x0)
-    # Read REVID register
-    data = reg_read(device,0x40)
-            
-    # If result equals expected value of the REVID register
-    if str(data[0]) == '1':          
-        print('Success: ' + str(data[0]) +'\n')
-        return 1
-    else:
-        print('Failure, returned value: ' + str(data[0]) +'\n')
-        return 0          
+# Other Constants
+SHORT_COUNTER_LIMIT = 7
+SLEEP_INTERVAL = 0.005
 
+class SPIInterface:
+    """Class to handle SPI communication with devices."""
 
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Programs on-board ADS1293 device with pre-set values for 3-lead ECG operation
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-def ADS1293_init_1lead(device):
+    def __init__(self, bus, device, max_speed_hz=SPI_MAX_SPEED_HZ):
+        self.spi = spidev.SpiDev()
+        self.spi.open(bus, device)
+        self.spi.max_speed_hz = max_speed_hz
+        print('SPI initialized')
 
-    #stop data conversion
-    reg_write(device,0x0,0x0)
+    def transfer(self, data):
+        """Transfer data over SPI."""
+        return self.spi.xfer(data)
 
-    #connect channel 1 pos to IN2 and neg to IN1
-    reg_write(device, 0x01, 0x11)
+    def close(self):
+        """Close the SPI connection."""
+        self.spi.close()
 
-    #enable common-mode detector on input pins IN1 and IN2
-    reg_write(device, 0x0A, 0x03)
+class GPIOInterface:
+    """Class to handle GPIO operations."""
 
-    #connect output of RLD amplifier to IN4
-    reg_write(device, 0x0C, 0x04)
+    def __init__(self):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(CS1_PIN, GPIO.OUT)
+        GPIO.setup(CS2_PIN, GPIO.OUT)
+        GPIO.output(CS1_PIN, 1)
+        GPIO.output(CS2_PIN, 1)
 
-    #enable clock to digital
-    reg_write(device, 0x12, 0x04)
+    def set_output(self, pin, state):
+        """Set the output state of a GPIO pin."""
+        GPIO.output(pin, state)
 
-	#configure channels 1 and 2 for high frequency, high resolution
-    reg_write(device, 0x13, 0x1B)
+def main():
+    """Main function to run the ECG and ADC data collection."""
+    gpio = GPIOInterface()
+    spi = SPIInterface(SPI_BUS, SPI_DEVICE)
 
-    #shut down channel 2 and 3s amplifier and ADC
-    reg_write(device, 0x14,0x36)
+    ecg_device = ADS1293(spi, gpio, CS1_PIN)
+    adc_device = ADS1241(spi, gpio, CS2_PIN)
 
-    #configure R2 decimation rate as 8 for all channels
-    reg_write(device, 0x21, 0x10)
+    adc_device.program_adc()
 
-    #configure R3 decimation rate as 16 for channels 1 and 2
-    reg_write(device, 0x22, 0x10)
-    reg_write(device, 0x23, 0x10)
+    while True:
+        print('Checking device on CS1')
+        if ecg_device.test_connection():
+            print('Initialize Device 1 to 1 lead mode')
+            ecg_device.init_1lead()
 
-    #configure R1 decimation rate as single for all channels
-    reg_write(device, 0x25, 0x00)
-
-    #configure DRDYB source to channel 1 ECG
-    reg_write(device, 0x27, 0x08)
-
-    #enable STATUS, channel 1 ECG and channel 2 ECG for loop read-back mode
-    reg_write(device, 0x2F, 0x30)
-    
-    #start data conversion
-    reg_write(device, 0x00, 0x01)
-    print('ADS1293 1 lead mode programmed \n')
-
-
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief reads data from CH1 and CH2 of the ADS1293
-@return value of CH1 and CH2 data
-@param[in] device being requested for data, this ensure the correct CS line is pulled low 
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-def read_ECG_data_CH1_CH2(device):
-    # Read operation from the DATA_LOOP register
-    # Extend the CSB assertion beyond 16 clocks
-    # Streaming mode supported by DATA_STATUS, DATA_...CH1_PACE,CH2_PACE,CH3_PACE,CH1_ECG,CH2_ECG,CH3_ECG
-    # ECG data is 3 bytes long?
-    
-    # Do I need to check the DATA_STATUS register to see if new ECG data is ready?
-    
-    # Set CS bit low for transmission
-    GPIO.output(device,0) 
-    # Adding Read bit to the register address with an OR with 0x80
-    Read_command = 0x50|0x80     
-    # SPI read data from register 
-    spi.xfer([Read_command])   
-    # Write zeros to keep the clk ticking for the slave response
-    # 3 Bytes for CH1, 3 Bytes for CH2
-    data = spi.xfer([0x0,0x0,0x0,0x0,0x0,0x0])  
-    # Set CS bit high for end of transmission
-    GPIO.output(device,1) 
-    return data
-
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief reads data from CH1 of the ADS1293
-@return value of CH1 data
-@param[in] device being requested for data, this ensure the correct CS line is pulled low 
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-def read_ECG_data_CH1(device):
-    # Read operation from the DATA_LOOP register
-    # Extend the CSB assertion beyond 16 clocks
-    # Streaming mode supported by DATA_STATUS, DATA_...CH1_PACE,CH2_PACE,CH3_PACE,CH1_ECG,CH2_ECG,CH3_ECG
-    # ECG data is 3 bytes long?
-    
-    # Do I need to check the DATA_STATUS register to see if new ECG data is ready?
-    
-    # Set CS bit low for transmission
-    GPIO.output(device,0) 
-    # Adding Read bit to the register address with an OR with 0x80
-    Read_command = 0x50|0x80     
-    # SPI read data from register 
-    spi.xfer([Read_command])   
-    # Write zeros to keep the clk ticking for the slave response
-    # 3 Bytes for CH1
-    data = spi.xfer([0x0,0x0,0x0])  
-    # Set CS bit high for end of transmission
-    GPIO.output(device,1) 
-    return data
-
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Initialises ADS1241
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-P_Ain0        = 0b00000111
-P_Ain1        = 0b00010111
-Blank         = 0b00000000
-Read_Address  = 0b00000001
-Setup_Reg     = 0b01010000
-MUX_Ctrl_Reg  = 0b01010001
-Alg_Ctrl_Reg  = 0b01010010
-
-
-def ADC_Programme():
-       # Set CS bit low for transmission
-       GPIO.output(ADC_PIN,0) 
-       #WREG = 0b0101
-       # Programme Setup Register
-       # Gain = 1
-       spi.xfer([Setup_Reg,Blank,Blank])   
-       time.sleep(0.1)
-       # Set CS bit high for end of transmission
-       GPIO.output(ADC_PIN,1)
-
-def Input_Select(Input_Sel):
-       # Set CS bit low for transmission
-       GPIO.output(ADC_PIN,0) 
-       spi.xfer([MUX_Ctrl_Reg,Blank,Input_Sel,Blank])   
-       # Set CS bit high for end of transmission
-       GPIO.output(ADC_PIN,1)
-
-def Fetch_ADC_data():
-       # Set CS bit low for transmission
-       GPIO.output(ADC_PIN,0) 
-       #  spi.xfer([0b00011110,0b11101010])  
-       # Requesting new data
-       spi.xfer([Read_Address])
-       ADC_data = spi.xfer([Blank,Blank,Blank])
-       #data1 = spi.xfer([0x0,0x0, Byte1,Byte2])
-       # Set CS bit high for end of transmission
-       GPIO.output(ADC_PIN,1)
-       return ADC_data
-
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-@brief Initialises Rpi SPI interface
-@note  CS pin for spidev library has issues and oscillates at the end of transmission
-       as a solution a GPIO is set as a manual cs pin for each device
-'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-# Initialise to GPIO mode
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-# Set GPIO24 to be CS1 pin
-CS1 = 24       
-GPIO.setup(23, GPIO.OUT)
-# Set GPIO23 to be CS2 pin
-CS2 = 23       
-GPIO.setup(24, GPIO.OUT)
-# Set CS bits high for no transmission  
-GPIO.output(CS1,1)   
-GPIO.output(CS2,1)    
-ECG_PIN = CS1
-ADC_PIN = CS2
-
-# Enable SPI
-spi = spidev.SpiDev()       
-# Open a connection to the devices
-spi.open(0, 0)         
-# Set SPI speed
-spi.max_speed_hz = 32000    
-print('SPI initialised\n')
-
-# Programme ADC
-ADC_Programme() 
-
-
-while True:
-    print('Checking device on CS1')
-    result = ADS1293_testConnection(ECG_PIN)
-
-
-    if (result == 1):
-        
-        print('Initialize Device 1 to 1 lead mode')
-        ADS1293_init_1lead(ECG_PIN) 
-        
-        short_counter = 0
-        P_Ain0_raw    = 0 
-        P_Ain1_raw    = 0 
-        CH1data_raw   = 0
-        while True:
-
-            # Request Data for P_Ain0
-            Input_Select(P_Ain0) 
-            P_Ain0_data = Fetch_ADC_data() 
-            P_Ain0_raw = ((P_Ain0_data[0] & 0xFF) << 16) | ((P_Ain0_data[1] & 0xFF) << 8) | (P_Ain0_data[2] & 0xFF)
-            
-
-            while short_counter<=7:
-                # Read in ECG data                                                                    
-                data = read_ECG_data_CH1_CH2(ECG_PIN)
-                CH1data_raw = ((data[0] & 0xFF) << 16) | ((data[1] & 0xFF) << 8) | (data[2] & 0xFF)
-                print(CH1data_raw, P_Ain0_raw)
-                short_counter = short_counter + 1
-                time.sleep(0.005)         
             short_counter = 0
-            
+            while True:
+                adc_device.input_select(ADS1241_P_AIN0)
+                p_ain0_data = adc_device.fetch_adc_data()
+                p_ain0_raw = ((p_ain0_data[0] & 0xFF) << 16) | ((p_ain0_data[1] & 0xFF) << 8) | (p_ain0_data[2] & 0xFF)
 
-            # Request Data for P_Ain1
-            # Input_Select(P_Ain1) 
-            # P_Ain1_data = Fetch_ADC_data() 
-            # P_Ain1_raw = ((P_Ain1_data[0] & 0xFF) << 16) | ((P_Ain1_data[1] & 0xFF) << 8) | (P_Ain1_data[2] & 0xFF)
-                        
-                                
-            # while short_counter<=7:
-            #     # Read in ECG data                                                                    
-            #     data = read_ECG_data_CH1_CH2(ECG_PIN)
-            #     CH1data_raw = ((data[0] & 0xFF) << 16) | ((data[1] & 0xFF) << 8) | (data[2] & 0xFF)
-            #     print(CH1data_raw, P_Ain1_raw)
-            #     short_counter = short_counter + 1
-            #     time.sleep(0.005)
-            # short_counter = 0
+                while short_counter <= SHORT_COUNTER_LIMIT:
+                    data = ecg_device.read_ecg_data_ch1_ch2()
+                    ch1data_raw = ((data[0] & 0xFF) << 16) | ((data[1] & 0xFF) << 8) | (data[2] & 0xFF)
+                    print(ch1data_raw, p_ain0_raw)
+                    short_counter += 1
+                    time.sleep(SLEEP_INTERVAL)
+                short_counter = 0
+        else:
+            print('Cannot detect device!')
+            time.sleep(0.1)
 
-            print(CH1data_raw, P_Ain0_raw)
-            
-        
-        #return 0
-    else:
-        print('Cannot detect device!')
-        time.sleep(0.1)
-    # if __name__ == '__main__':
-    #     main(0)
-    #     import sys
-    
-
-
-
-            
+if __name__ == '__main__':
+    main()
     

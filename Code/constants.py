@@ -1,0 +1,34 @@
+"""
+Constants for BLE ECG Data Capture
+"""
+
+# Device Constants
+DEVICE_1 = "48:23:35:00:36:1B"
+DEVICE_2 = "48:23:35:00:36:3E"
+DEVICE_3 = "CC:86:EC:65:E4:DC"
+DEVICE_4 = "00:3C:84:DD:2B:F6"
+DEVICE_5 = "00:3c:84:dd:2c:01"
+DEVICE_6 = "00:3c:84:DA:EA:D1"
+DEVICE_OLD = DEVICE_5
+
+# Sampling and Data Constants
+NUM_CHANNEL_IMU = 9
+SAMPLES_PER_CHANNEL_IMU = 1
+SAMPLES_PER_CHANNEL_ECG = 10
+BYTES_PER_SAMPLE_ECG = 3
+BYTES_PER_SAMPLE_IMU = 2
+TOTAL_BYTES_IMU = 20
+ECG_SAMPLING_PERIOD = 500
+HEADER_BYTES_IMU = 1
+IMU_SCALE_FACTOR = 2048
+SKIP_NUM = 10
+ADC_MAX = 0xF30000
+V_REF = 2.4
+NUM_LOD_CHANNELS = 1
+
+# Bluetooth Constants
+MTU_VALUE = 'mtu 250'
+STREAM_REQUEST_NEW = 'char-write-req 0x0016 0100'
+STREAM_REQUEST_OLD = 'char-write-req 0x001d 0100'
+ACK_HANDLE_NEW = "Notification handle = 0x0015 value:"
+ACK_HANDLE_OLD = "Notification handle = 0x001c value:" 
