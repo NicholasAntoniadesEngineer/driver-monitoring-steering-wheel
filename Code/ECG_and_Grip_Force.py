@@ -5,8 +5,8 @@ ECG and Grip Force Monitoring Script
 This script interfaces with the ADS1293 and ADS1241 devices to read ECG and ADC data.
 It uses the Raspberry Pi's SPI interface for communication.
 
-Author: Your Name
-Date: YYYY-MM-DD
+Author: Nicholas Antoniades
+Date: 2020-11-04
 """
 
 import spidev

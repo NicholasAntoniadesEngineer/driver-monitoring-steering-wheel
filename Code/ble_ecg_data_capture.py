@@ -8,7 +8,6 @@ It connects to a selected device and writes all data to a single .csv file.
 Author: Nicholas Antoniades
 Start Date: 03/01/2022
 Last Modified: 23/05/2022
-Version: 0.0.1
 """
 
 import datetime
