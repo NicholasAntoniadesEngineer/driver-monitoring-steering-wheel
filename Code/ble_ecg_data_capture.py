@@ -12,7 +12,6 @@ Last Modified: 23/05/2022
 
 import datetime
 import sys
-import time
 from constants import *
 from bluetooth_connection import BluetoothConnection
 from data_processing import DataProcessor
