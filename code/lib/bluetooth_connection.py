@@ -46,3 +46,28 @@ class BluetoothConnection:
             bluetooth_data.expect(ACK_HANDLE_OLD, timeout=1)
 
         return bluetooth_data 
+
+    def collect_data(self, data_processor, writer, time_stamp, delta_time, f):
+        """Collect and process data from the Bluetooth connection."""
+        write_count = 0
+        while True:
+            try:
+                notification_handle = "0x0015" if self.selected_device in [DEVICE_3, DEVICE_4] else "0x001c"
+                self.bluetooth_data.expect(f"Notification handle = {notification_handle} value:", timeout=1)
+            except Exception:
+                print("\nConnection lost!\n")
+                f.close()
+                return
+
+            data_processor.process_data(self.bluetooth_data)
+            time_val = [time_stamp + delta_time * k for k in range(SAMPLES_PER_CHANNEL_ECG)]
+
+            if write_count >= SKIP_NUM:
+                data_rows = []
+                for l in range(SAMPLES_PER_CHANNEL_ECG):
+                    data_row = data_processor.prepare_data_row(time_val, l)
+                    data_rows.append(data_row)
+                    print(self.bluetooth_data.before[1:180])
+                writer.writerows(data_rows)
+            else:
+                write_count += 1 

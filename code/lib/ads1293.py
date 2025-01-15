@@ -26,10 +26,18 @@ ECG_DATA_BYTES = 3
 class ADS1293:
     """Class to interface with the ADS1293 device."""
 
-    def __init__(self, spi, gpio, cs_pin):
+    def __init__(self, spi, gpio, config):
+        """Initialize ADS1293 with configuration.
+        
+        Args:
+            spi: SPI interface instance
+            gpio: GPIO interface instance
+            config (dict): Configuration dictionary containing:
+                - cs_pin (str): Chip select pin name
+        """
         self.spi = spi
         self.gpio = gpio
-        self.cs_pin = cs_pin
+        self.cs_pin = config['cs_pin']
 
     def reg_read(self, reg_address):
         """Read a single byte from a register."""

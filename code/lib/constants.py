@@ -31,4 +31,21 @@ MTU_VALUE = 'mtu 250'
 STREAM_REQUEST_NEW = 'char-write-req 0x0016 0100'
 STREAM_REQUEST_OLD = 'char-write-req 0x001d 0100'
 ACK_HANDLE_NEW = "Notification handle = 0x0015 value:"
-ACK_HANDLE_OLD = "Notification handle = 0x001c value:" 
+ACK_HANDLE_OLD = "Notification handle = 0x001c value:"
+
+# Hardware Configuration
+SPI_CONFIG = {
+    'BUS': 0,
+    'DEVICE': 0,
+    'MAX_SPEED_HZ': 32000
+}
+
+GPIO_CONFIG = {
+    'CS1_PIN': 24,
+    'CS2_PIN': 23
+}
+
+SAMPLING_CONFIG = {
+    'SHORT_COUNTER_LIMIT': 7,
+    'SLEEP_INTERVAL': 0.005
+} 

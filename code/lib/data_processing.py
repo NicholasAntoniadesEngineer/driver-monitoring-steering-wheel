@@ -8,15 +8,21 @@ from constants import *
 class DataProcessor:
     """Class to process raw ECG and IMU data."""
 
-    def __init__(self, num_channels_ecg):
-        self.num_channels_ecg = num_channels_ecg
-        self.total_samples_ecg = num_channels_ecg * SAMPLES_PER_CHANNEL_ECG
+    def __init__(self, config):
+        """Initialize DataProcessor with configuration.
+        
+        Args:
+            config (dict): Configuration dictionary containing:
+                - num_channels_ecg (int): Number of ECG channels
+        """
+        self.num_channels_ecg = config['num_channels_ecg']
+        self.total_samples_ecg = self.num_channels_ecg * SAMPLES_PER_CHANNEL_ECG
         self.total_samples_imu = NUM_CHANNEL_IMU * SAMPLES_PER_CHANNEL_IMU
         self.single_sample_ecg = [1] * self.total_samples_ecg
         self.raw_adc_ecg = [1] * self.total_samples_ecg
         self.raw_lod_ecg = [1]
         self.single_sample_imu = [1] * self.total_samples_imu
-        self.converted_voltage_ecg = np.array([[1] * SAMPLES_PER_CHANNEL_ECG] * num_channels_ecg, dtype=float)
+        self.converted_voltage_ecg = np.array([[1] * SAMPLES_PER_CHANNEL_ECG] * self.num_channels_ecg, dtype=float)
         self.raw_imu = np.array([[1] * SAMPLES_PER_CHANNEL_IMU] * NUM_CHANNEL_IMU, dtype=float)
         self.multi_axis_imu = np.array([[1] * SAMPLES_PER_CHANNEL_ECG] * NUM_CHANNEL_IMU, dtype=float)
 
@@ -64,3 +70,17 @@ class DataProcessor:
             for i in range(3):
                 self.multi_axis_imu[i, x] = self.raw_imu[x] / IMU_SCALE_FACTOR
             x += 1 
+
+    def prepare_data_row(self, time_val, sample_index):
+        """Prepare a single row of data for writing."""
+        data_to_write = [0] * (NUM_CHANNEL_IMU + self.num_channels_ecg + 2)
+        data_to_write[0] = self.raw_lod_ecg[0]
+
+        for m in range(self.num_channels_ecg):
+            data_to_write[NUM_LOD_CHANNELS + m] = self.converted_voltage_ecg[m, sample_index]
+
+        for m in range(NUM_CHANNEL_IMU):
+            data_to_write[self.num_channels_ecg + NUM_LOD_CHANNELS + m] = self.multi_axis_imu[0, m]
+
+        data_to_write[12] = time_val[sample_index].isoformat()
+        return data_to_write 

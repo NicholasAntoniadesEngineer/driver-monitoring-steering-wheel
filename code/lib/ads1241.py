@@ -17,10 +17,18 @@ ADC_DATA_BYTES = 3
 class ADS1241:
     """Class to interface with the ADS1241 device."""
 
-    def __init__(self, spi, gpio, cs_pin):
+    def __init__(self, spi, gpio, config):
+        """Initialize ADS1241 with configuration.
+        
+        Args:
+            spi: SPI interface instance
+            gpio: GPIO interface instance
+            config (dict): Configuration dictionary containing:
+                - cs_pin (str): Chip select pin name
+        """
         self.spi = spi
         self.gpio = gpio
-        self.cs_pin = cs_pin
+        self.cs_pin = config['cs_pin']
 
     def program_adc(self):
         """Program the ADC with initial settings."""
