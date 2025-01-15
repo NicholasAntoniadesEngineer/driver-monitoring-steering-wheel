@@ -12,6 +12,7 @@ Date: 2020-11-04
 import sys
 from lib.data_collection import DataCollector
 from lib.ads1241 import ADS1241_P_AIN0
+from lib.header_configs import DEVICE_HEADERS
 
 # Configuration for the data collection system
 SYSTEM_CONFIG = {
@@ -38,7 +39,8 @@ SYSTEM_CONFIG = {
     'file_config': {
         'test_name': 'ECG_Grip_Force',
         'device_name': 'ADS1293_ADS1241',
-        'device_id': 'LOCAL'
+        'file_prefix': 'steering_wheel',
+        'headers': DEVICE_HEADERS['ECG_GRIP']
     },
     'devices': {
         'ecg': {

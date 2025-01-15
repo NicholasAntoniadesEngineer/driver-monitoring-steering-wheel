@@ -4,6 +4,8 @@ ADS1241 Device Interface
 This module provides an interface to the ADS1241 device for ADC data collection.
 """
 
+import time
+
 # Constants for ADS1241
 ADS1241_P_AIN0 = 0b00000111
 ADS1241_P_AIN1 = 0b00010111

@@ -4,7 +4,7 @@ Bluetooth Connection Management
 
 import pexpect
 import time
-from constants import *
+from .constants import *
 
 class BluetoothConnection:
     """Class to manage Bluetooth connections."""
