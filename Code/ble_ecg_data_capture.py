@@ -16,19 +16,23 @@ from lib.constants import *
 from lib.bluetooth_connection import BluetoothConnection
 from lib.data_processing import DataProcessor
 from lib.file_management import FileManager
+from lib.header_configs import DEVICE_HEADERS
 
 def get_device_config():
     """Configure device settings based on the selected device."""
     device_new = ""
     selected_device = device_new if device_new else DEVICE_OLD
     
-    num_channels_ecg = {
-        DEVICE_1: 5,
-        DEVICE_4: 2
-    }.get(selected_device, 2)
+    device_type = 'ECG_5LEAD' if selected_device == DEVICE_1 else 'ECG_IMU'
     
-    device_name = 'Brain-Beta-v1-1' if selected_device == DEVICE_OLD else 'Older-Version'
-    return selected_device, num_channels_ecg, device_name
+    file_config = {
+        'test_name': 'Test',
+        'device_name': 'Brain-Beta-v1-1' if selected_device == DEVICE_OLD else 'Older-Version',
+        'file_prefix': 'ble_ecg',
+        'headers': DEVICE_HEADERS[device_type]
+    }
+    
+    return selected_device, file_config
 
 def initialize_components(selected_device, num_channels_ecg, device_name):
     """Initialize all required components for data collection."""

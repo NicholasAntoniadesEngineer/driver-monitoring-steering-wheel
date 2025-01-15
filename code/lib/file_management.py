@@ -16,18 +16,22 @@ class FileManager:
             config (dict): Configuration dictionary containing:
                 - test_name (str): Name of the test
                 - device_name (str): Name of the device
-                - selected_device (str): Selected device identifier
+                - file_prefix (str): Prefix for file names
+                - headers (dict): Header configuration containing:
+                    - columns (list): Column names
+                    - metadata (dict): Additional metadata to write
         """
         self.test_name = config['test_name']
         self.device_name = config['device_name']
-        self.selected_device = config['selected_device']
+        self.file_prefix = config.get('file_prefix', 'data_capture')
+        self.headers = config['headers']
 
     def update_file_path(self, time_stamp):
         """Creates a custom file path."""
         current_date = str(time_stamp.date())
         current_time = time_stamp.strftime("%-H-%S")
         version = 'v'
-        file_path = f"{self.test_name}_{self.device_name}_{current_time}_{current_date}_{version}"
+        file_path = f"{self.file_prefix}_{self.test_name}_{current_time}_{current_date}_{version}"
         return file_path
 
     def initialise_csv(self, ver_counter, file_path):
@@ -36,18 +40,14 @@ class FileManager:
         f = open(file_path + str(ver_counter) + '.csv', 'w')
         writer = csv.writer(f)
 
-        time_stamp = datetime.datetime.now()
-        writer.writerow(['# Recorded using POD_Data_Capture.py'])
-        writer.writerow(['# Recorded on:     ' + str(time_stamp)])
-        writer.writerow(['# Device address:   ' + self.device_name])
-        writer.writerow(['# Device ID:        ' + self.selected_device])
+        # Write metadata
+        for key, value in self.headers['metadata'].items():
+            writer.writerow([f'# {key}: {value}'])
+        writer.writerow([f'# Recording time: {datetime.datetime.now()}'])
         writer.writerow([])
 
-        if self.selected_device == DEVICE_1:
-            data_header = ['ECG_1', 'ECG_2', 'ECG_3', 'ECG_4', 'ECG_5', 'tstamp']
-        else:
-            data_header = ['ECG_LOD', 'ECG_1', 'ECG_2', 'A_X', 'A_Y', 'A_Z', 'G_X', 'G_Y', 'G_Z', 'M_X', 'M_Y', 'M_Z', 'tstamp']
-        writer.writerow(data_header)
+        # Write column headers
+        writer.writerow(self.headers['columns'])
 
         return 0, writer, f
 
