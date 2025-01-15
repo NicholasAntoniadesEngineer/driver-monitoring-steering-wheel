@@ -5,7 +5,7 @@ As part of an Innovate UK funded project (May 2021), this project explores the f
 
 ## Project Goals
 - Research and analyze vehicle ambient and driver-movement noise within the expected application setting
-- Develop a proof-of-concept (POC) demonstrator comprising:
+- Develop a proof-of-concept demonstrator comprising:
   - Multiple steering wheel cover versions with different electrode technologies
   - Simple steering wheel test rig for tabletop placement
   - Biopotential capture electronics with user display
