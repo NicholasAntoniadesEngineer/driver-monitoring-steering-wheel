@@ -1,4 +1,4 @@
-# ECG Driver Monitoring Steering Wheel
+# ECG Driver Monitoring Steering Wheel (2021)
 
 ## Overview
 As part of an Innovate UK funded project (May 2021), this project explores the feasibility of recording heart rate variability (HRV) data of a driver in a vehicle using bipotential recording directly from the steering wheel. The system faces unique challenges in dealing with electromagnetic interference, noise management, and signal consistency as drivers move their hands along and occasionally off the steering wheel.
